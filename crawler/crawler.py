@@ -18,6 +18,7 @@ import aiohttp
 
 from .bfs import run_crawler
 from .cli import base_arg_parser, load_urls, make_config
+from .logging_setup import setup as setup_logging
 
 log = logging.getLogger("crawler")
 
@@ -30,6 +31,7 @@ HEADERS = {
 
 
 async def main():
+    setup_logging()
     p = base_arg_parser("Fast aiohttp crawler — no browser, maximum speed")
     p.add_argument("--concurrency", type=int, default=50)
     p.add_argument("--timeout", type=int, default=15)

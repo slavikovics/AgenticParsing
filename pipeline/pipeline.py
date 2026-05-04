@@ -29,6 +29,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)-8s  %(message)s",
     datefmt="%H:%M:%S",
+    stream=__import__("sys").stdout,
+    force=True,
 )
 log = logging.getLogger("pipeline")
 

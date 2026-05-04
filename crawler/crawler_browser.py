@@ -21,6 +21,7 @@ from crawl4ai.async_configs import CacheMode
 
 from .bfs import run_crawler
 from .cli import base_arg_parser, load_urls, make_config
+from .logging_setup import setup as setup_logging
 
 log = logging.getLogger("crawler")
 
@@ -50,6 +51,7 @@ _CRAWL4AI_CONFIG = CrawlerRunConfig(
 
 
 async def main():
+    setup_logging()
     p = base_arg_parser(
         "Browser crawler (crawl4ai + Playwright) — JS rendering, anti-bot stealth"
     )
@@ -57,7 +59,7 @@ async def main():
         "--concurrency",
         type=int,
         default=30,
-        help="Parallel browser tabs (default: 30, each uses ~50-100MB RAM)",
+        help="Parallel browser tabs (default: 30, each uses ~100MB RAM)",
     )
     args = p.parse_args()
 
