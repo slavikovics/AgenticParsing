@@ -20,7 +20,7 @@ def extract_text(html_bytes: bytes, url: str, readability: bool) -> str:
         html_bytes,
         url=url,
         include_formatting=True,  # preserve headings/bold/lists as markdown
-        include_links=False,  # skip hyperlinks — noise for RAG
+        include_links=False,  # skip hyperlinks
         include_tables=True,
         include_images=False,
         favor_precision=readability,
@@ -36,7 +36,6 @@ def content_hash(text: str) -> str:
 
 
 def make_title(text: str, url: str) -> str:
-    """Extract first H1-H3 from markdown text, fall back to URL path."""
     m = re.search(r"^#{1,3}\s+(.+)$", text, re.MULTILINE)
     return (
         m.group(1).strip()
@@ -46,7 +45,6 @@ def make_title(text: str, url: str) -> str:
 
 
 def safe_filename(url: str) -> str:
-    """Generate a unique, filesystem-safe .md filename from a URL."""
     import re as _re
 
     p = urlparse(url)

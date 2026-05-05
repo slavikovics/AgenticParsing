@@ -55,26 +55,22 @@ _NON_HTML_EXT = {
 
 
 def root_domain(url: str) -> str:
-    """Return registrable root domain, stripping subdomains."""
     netloc = urlparse(url).netloc.split(":")[0]
     parts = netloc.split(".")
     return ".".join(parts[-2:]) if len(parts) >= 2 else netloc
 
 
 def same_domain(url: str, base: str) -> bool:
-    """True if url shares root domain with base (subdomains included)."""
     return root_domain(url) == root_domain(base)
 
 
 def normalise(url: str) -> str:
-    """Canonical URL: no query string, no fragment, no trailing slash."""
     p = urlparse(url)
     path = p.path.rstrip("/") or "/"
     return p._replace(query="", fragment="", path=path).geturl()
 
 
 def domain_slug(url: str) -> str:
-    """Clean domain name safe for use as folder name. www.grsu.by → grsu_by"""
     import re
 
     netloc = urlparse(url).netloc.split(":")[0].lstrip("www.")
@@ -82,17 +78,11 @@ def domain_slug(url: str) -> str:
 
 
 def is_html_url(url: str) -> bool:
-    """True if the URL path looks like an HTML page (no binary extension)."""
     ext = Path(urlparse(url).path.lower().rstrip("/")).suffix
     return ext == "" or ext in (".html", ".htm") or ext not in _NON_HTML_EXT
 
 
 def extract_links(html_bytes: bytes, page_url: str, base_url: str) -> list[str]:
-    """
-    Extract all internal HTML links from raw bytes using lxml.
-    Handles relative URLs and <base> tags correctly.
-    Skips non-HTML resources and library subdomains.
-    """
     seen = set()
     try:
         doc = lxml_html.fromstring(html_bytes, base_url=page_url)

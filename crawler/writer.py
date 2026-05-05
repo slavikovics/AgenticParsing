@@ -19,18 +19,6 @@ log = logging.getLogger("crawler")
 class OutputWriter:
     """
     Writes crawled documents immediately to disk as they arrive.
-
-    Output layout:
-        {output_dir}/
-            grsu_by/
-                collection.jsonl     ← one JSON doc per line
-                pages/
-                    grsu_by_about.md
-                    ...
-            bsu_by/
-                collection.jsonl
-                pages/
-                    ...
     """
 
     def __init__(self, config: CrawlConfig):

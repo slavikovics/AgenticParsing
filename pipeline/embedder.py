@@ -70,7 +70,7 @@ class Embedder:
         use_quantization = False
         if self.device == "cuda":
             try:
-                import bitsandbytes  # noqa: F401
+                import bitsandbytes
                 from transformers import BitsAndBytesConfig
 
                 model_kwargs["quantization_config"] = BitsAndBytesConfig(

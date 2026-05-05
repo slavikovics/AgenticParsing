@@ -16,13 +16,6 @@ def score_chunks(
     doc_embeddings: np.ndarray,
     query_embeddings: np.ndarray,
 ) -> list[Chunk]:
-    """
-    Score each chunk against all relevance queries, keep the max score.
-
-    Both embedding matrices must be L2-normalised (cosine sim = dot product).
-    Shape: doc_embeddings (n_chunks, dim), query_embeddings (n_queries, dim)
-    Result: each chunk.similarity = max cosine similarity across all queries.
-    """
     scores = doc_embeddings @ query_embeddings.T  # (n_chunks, n_queries)
     max_scores = scores.max(axis=1)
 
@@ -37,12 +30,6 @@ def filter_chunks(
     min_score: float = 0.0,
     top_k: int = 999_999,
 ) -> tuple[list[Chunk], dict]:
-    """
-    Filter and rank chunks by similarity score.
-
-    Applies min_score threshold first, then caps at top_k.
-    Returns filtered chunks and a stats dict for logging.
-    """
     sorted_chunks = sorted(chunks, key=lambda c: c.similarity, reverse=True)
 
     above_threshold = [c for c in sorted_chunks if c.similarity >= min_score]

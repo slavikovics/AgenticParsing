@@ -38,8 +38,6 @@ from qdrant_client.models import (
 )
 
 log = logging.getLogger("pipeline")
-
-# How many points to send per request — sweet spot for gRPC
 UPLOAD_BATCH_SIZE = 2_000
 
 
@@ -57,7 +55,6 @@ def load_chunks(jsonl_path: Path) -> list[dict]:
 
 
 def chunk_to_point(chunk: dict, idx: int) -> PointStruct | None:
-    """Convert a Chunk dict to a Qdrant PointStruct."""
     vector = chunk.get("embedding")
     if not vector:
         return None
@@ -79,7 +76,6 @@ def chunk_to_point(chunk: dict, idx: int) -> PointStruct | None:
 
 
 def ensure_collection(client: QdrantClient, name: str, vector_size: int):
-    """Create collection if absent; recreate if vector size changed."""
     if client.collection_exists(name):
         info = client.get_collection(name)
         existing_size = info.config.params.vectors.size
@@ -101,12 +97,10 @@ def ensure_collection(client: QdrantClient, name: str, vector_size: int):
             size=vector_size,
             distance=Distance.COSINE,
         ),
-        # HNSW tuned for recall vs speed balance
         hnsw_config=HnswConfigDiff(
             m=16,
             ef_construct=100,
         ),
-        # Reduce indexing overhead during bulk upload
         optimizers_config=OptimizersConfigDiff(
             indexing_threshold=20_000,
         ),

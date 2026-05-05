@@ -17,12 +17,10 @@ log = logging.getLogger("pipeline")
 
 
 def estimate_tokens(text: str) -> int:
-    """Rough token estimate: Slavic languages average ~1.35 tokens per word."""
     return int(len(text.split()) * 1.35)
 
 
 def _tail_tokens(parts: list[str], token_budget: int) -> str:
-    """Return the last `token_budget` tokens worth of text from a list of parts."""
     result = []
     budget = 0
     for part in reversed(parts):
