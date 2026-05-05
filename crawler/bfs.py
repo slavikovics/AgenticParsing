@@ -42,8 +42,6 @@ async def run_crawler(
     """
     writer = OutputWriter(config)
     queue: asyncio.Queue = asyncio.Queue()
-    stats_lock = asyncio.Lock()
-
     for url in urls:
         state = DomainState(url)
         queue.put_nowait((normalise(url), 0, state))
@@ -65,8 +63,6 @@ async def run_crawler(
             for link in new_links:
                 state.visited.add(link)
                 queue.put_nowait((link, depth + 1, state))
-            async with stats_lock:
-                pass  # stats_lock kept for future counters
 
         # ── Content extraction ────────────────────────────────────────────
         text = extract_text(html_bytes, url, config.readability)

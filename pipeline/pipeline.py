@@ -23,7 +23,7 @@ from pathlib import Path
 from .chunker import chunk_collection
 from .config import CHUNK_MAX_WORDS, CHUNK_MIN_WORDS, MODEL_ID, RELEVANCE_QUERIES
 from .embedder import Embedder
-from .filter import filter_top_k, score_chunks
+from .filter import filter_chunks, score_chunks
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,6 +40,7 @@ def process_domain(
     embedder: Embedder,
     query_embeddings,
     top_k: int,
+    min_score: float,
     chunk_tokens: int,
     overlap_tokens: int,
     min_chunk_words: int,
@@ -70,29 +71,41 @@ def process_domain(
     log.info("Scoring against %d queries...", len(RELEVANCE_QUERIES))
     chunks = score_chunks(chunks, doc_embeddings, query_embeddings)
 
-    # 4. Save all chunks with scores
+    # 4. Save all chunks with scores + embeddings
     chunks_path = domain_dir / "chunks.jsonl"
     with open(chunks_path, "w", encoding="utf-8") as f:
-        for chunk in chunks:
-            f.write(json.dumps(chunk.to_dict(), ensure_ascii=False) + "\n")
+        for chunk, emb in zip(chunks, doc_embeddings):
+            row = chunk.to_dict()
+            row["embedding"] = emb.tolist()
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
     log.info("Saved %d chunks → %s", len(chunks), chunks_path)
 
-    # 5. Filter top-K and save
-    filtered = filter_top_k(chunks, top_k)
+    # 5. Filter by score threshold + top-K cap
+    filtered, stats = filter_chunks(chunks, min_score=min_score, top_k=top_k)
+    log.info(
+        "  Filter: %d total → %d above %.2f threshold → %d kept (top_k=%d)",
+        stats["total"],
+        stats["above_threshold"],
+        stats["min_score"],
+        stats["kept"],
+        stats["top_k"],
+    )
     filtered_path = domain_dir / "chunks_filtered.jsonl"
+    # Build a lookup from chunk_id → embedding
+    emb_lookup = {c.chunk_id: emb.tolist() for c, emb in zip(chunks, doc_embeddings)}
     with open(filtered_path, "w", encoding="utf-8") as f:
         for chunk in filtered:
-            f.write(json.dumps(chunk.to_dict(), ensure_ascii=False) + "\n")
+            row = chunk.to_dict()
+            row["embedding"] = emb_lookup[chunk.chunk_id]
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     elapsed = time.time() - t0
-    top_score = filtered[0].similarity if filtered else 0
-    bot_score = filtered[-1].similarity if filtered else 0
     log.info(
         "Filtered → %d chunks in %.1fs | scores: %.3f – %.3f → %s",
-        len(filtered),
+        stats["kept"],
         elapsed,
-        top_score,
-        bot_score,
+        stats["top_score"],
+        stats["bot_score"],
         filtered_path,
     )
 
@@ -105,7 +118,18 @@ def parse_args():
     p.add_argument(
         "--domain", default=None, help="Process only this domain slug, e.g. grsu_by"
     )
-    p.add_argument("--top-k", type=int, default=1000)
+    p.add_argument(
+        "--top-k",
+        type=int,
+        default=999_999,
+        help="Max chunks to keep per domain after threshold (default: unlimited)",
+    )
+    p.add_argument(
+        "--min-score",
+        type=float,
+        default=0.65,
+        help="Minimum cosine similarity to keep a chunk (default: 0.65)",
+    )
     p.add_argument(
         "--chunk-size", type=int, default=400, help="Target chunk size in tokens"
     )
@@ -115,7 +139,7 @@ def parse_args():
     p.add_argument("--min-chunk-words", type=int, default=CHUNK_MIN_WORDS)
     p.add_argument("--max-chunk-words", type=int, default=CHUNK_MAX_WORDS)
     p.add_argument(
-        "--batch-size", type=int, default=64, help="GPU embedding batch size"
+        "--batch-size", type=int, default=32, help="GPU embedding batch size"
     )
     p.add_argument("--model", default=MODEL_ID)
     return p.parse_args()
@@ -140,7 +164,8 @@ def main():
 
     log.info("Domains: %s", [d.name for d in domain_dirs])
     log.info(
-        "Top-K: %d | Chunk: %d tokens | Overlap: %d | Words: %d–%d",
+        "Min-score: %.2f | Top-K: %d | Chunk: %d tokens | Overlap: %d | Words: %d–%d",
+        args.min_score,
         args.top_k,
         args.chunk_size,
         args.overlap,
@@ -160,6 +185,7 @@ def main():
                 embedder,
                 query_embeddings,
                 top_k=args.top_k,
+                min_score=args.min_score,
                 chunk_tokens=args.chunk_size,
                 overlap_tokens=args.overlap,
                 min_chunk_words=args.min_chunk_words,

@@ -1,5 +1,5 @@
 """
-filter.py — cosine similarity scoring and top-K filtering.
+filter.py — cosine similarity scoring, threshold filtering, and top-K cap.
 """
 
 import logging
@@ -23,8 +23,7 @@ def score_chunks(
     Shape: doc_embeddings (n_chunks, dim), query_embeddings (n_queries, dim)
     Result: each chunk.similarity = max cosine similarity across all queries.
     """
-    # (n_chunks, n_queries)
-    scores = doc_embeddings @ query_embeddings.T
+    scores = doc_embeddings @ query_embeddings.T  # (n_chunks, n_queries)
     max_scores = scores.max(axis=1)
 
     for chunk, score in zip(chunks, max_scores):
@@ -33,6 +32,30 @@ def score_chunks(
     return chunks
 
 
-def filter_top_k(chunks: list[Chunk], top_k: int) -> list[Chunk]:
-    """Return the top-K chunks by similarity score, sorted descending."""
-    return sorted(chunks, key=lambda c: c.similarity, reverse=True)[:top_k]
+def filter_chunks(
+    chunks: list[Chunk],
+    min_score: float = 0.0,
+    top_k: int = 999_999,
+) -> tuple[list[Chunk], dict]:
+    """
+    Filter and rank chunks by similarity score.
+
+    Applies min_score threshold first, then caps at top_k.
+    Returns filtered chunks and a stats dict for logging.
+    """
+    sorted_chunks = sorted(chunks, key=lambda c: c.similarity, reverse=True)
+
+    above_threshold = [c for c in sorted_chunks if c.similarity >= min_score]
+    final = above_threshold[:top_k]
+
+    stats = {
+        "total": len(chunks),
+        "above_threshold": len(above_threshold),
+        "kept": len(final),
+        "dropped": len(chunks) - len(final),
+        "top_score": final[0].similarity if final else 0.0,
+        "bot_score": final[-1].similarity if final else 0.0,
+        "min_score": min_score,
+        "top_k": top_k,
+    }
+    return final, stats

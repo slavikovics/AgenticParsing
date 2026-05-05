@@ -1,6 +1,8 @@
 """
 config.py — embedding model, relevance queries, and chunk size constants.
-Edit this file to change what "relevant for applicants" means.
+
+All chunk/token sizing is derived from MAX_CHUNK_TOKENS so chunker and
+embedder always stay in sync. Change that one constant to resize everything.
 """
 
 # ── Embedding model ───────────────────────────────────────────────────────────
@@ -8,12 +10,33 @@ Edit this file to change what "relevant for applicants" means.
 MODEL_ID = "Qwen/Qwen3-Embedding-8B"
 
 # Prepended to queries at inference time (not to documents).
-# Qwen3-Embedding is instruction-tuned — this prefix improves retrieval quality.
 QUERY_INSTRUCTION = "Instruct: Retrieve relevant university information for prospective students\nQuery: "
 
+# ── Chunk / token sizing ──────────────────────────────────────────────────────
+#
+# MAX_CHUNK_TOKENS is the master constant.
+# Chunker targets this size; embedder uses it as max_length.
+#
+# Memory per batch = batch_size × MAX_CHUNK_TOKENS × 2 bytes (fp16) × hidden_dim
+# Qwen3-8B int4, MAX_CHUNK_TOKENS=1024, batch_size=8 ≈ ~2GB activation memory
+#
+# Word ↔ token ratio for Slavic text: ~1.35 tokens/word
+#   600 words ≈ 810 tokens  → MAX_CHUNK_TOKENS=1024 covers all chunks with headroom
+#   400 words ≈ 540 tokens  → MAX_CHUNK_TOKENS=640 is sufficient if you use smaller chunks
+
+MAX_CHUNK_TOKENS = 1024  # embedder max_length — set equal to or above chunk target
+
+# Chunker targets this many tokens per chunk (≈ MAX_CHUNK_TOKENS * 0.75 to leave overlap room)
+CHUNK_TARGET_TOKENS = 768  # ~570 words
+CHUNK_OVERLAP_TOKENS = 64
+
+# Word bounds for normalisation pass
+CHUNK_MIN_WORDS = 40  # drop stubs
+CHUNK_MAX_WORDS = int(
+    CHUNK_TARGET_TOKENS / 1.35
+)  # ≈ 570 words — derived, don't set manually
+
 # ── Relevance queries ─────────────────────────────────────────────────────────
-# Each chunk is scored against ALL queries; max score is kept.
-# Add more queries to broaden coverage, remove to narrow focus.
 
 RELEVANCE_QUERIES = [
     "поступление в университет требования для абитуриентов",
@@ -27,8 +50,3 @@ RELEVANCE_QUERIES = [
     "admission university requirements applicants enrollment",
     "dormitory accommodation student housing",
 ]
-
-# ── Chunk size bounds ─────────────────────────────────────────────────────────
-
-CHUNK_MIN_WORDS = 40  # drop stubs: lone headings, single sentences
-CHUNK_MAX_WORDS = 600  # re-split oversized chunks for uniform retrieval
