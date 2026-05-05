@@ -1,0 +1,3 @@
+Domains: ['amia_by', 'baa_by', 'barsu_by', 'bdam_by', 'belstu_by', 'bgam_by', 'bgut_by', 'bntu_by', 'brsu_by', 'bru_by', 'bsac_by', 'bsatu_by', 'bseu_by', 'bsmu_by', 'bspu_by', 'bstu_by', 'bsu_by', 'bsuir_by', 'bsut_by', 'bteu_by', 'buk_by', 'ggau_by', 'grsmu_by', 'grsu_by', 'gsmu_by', 'gstu_by', 'gsu_by', 'imb_by', 'institutemvd_by', 'ips_gpk_gov_by', 'isz_minsk_by', 'kudapostupat_by', 'mitso_by', 'mspu_by', 'pac_by', 'polessu_by', 'psu_by', 'sportedu_by', 'ucp_by', 'varb_mil_by', 'vsmu_by', 'vstu_by', 'vsu_by']
+
+grsu_by
