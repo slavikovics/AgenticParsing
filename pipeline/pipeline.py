@@ -141,7 +141,7 @@ def parse_args():
     p.add_argument(
         "--batch-size", type=int, default=32, help="GPU embedding batch size"
     )
-    p.add_argument("--start-domain", type=str, default="grsu_by")
+    p.add_argument("--start-domain", type=str, default="gsmu_by")
     p.add_argument("--model", default=MODEL_ID)
     return p.parse_args()
 
@@ -178,10 +178,13 @@ def main():
 
     log.info("Embedding %d relevance queries...", len(RELEVANCE_QUERIES))
     query_embeddings = embedder.embed_queries(RELEVANCE_QUERIES)
+    start_domain_visited = False
 
     for domain_dir in domain_dirs:
-        if domain_dir.name != args.start_domain:
+        if domain_dir.name != args.start_domain and not start_domain_visited:
             continue
+        else:
+            start_domain_visited = True
 
         try:
             process_domain(
