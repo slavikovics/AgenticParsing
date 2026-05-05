@@ -24,17 +24,15 @@ QUERY_INSTRUCTION = "Instruct: Retrieve relevant university information for pros
 #   600 words ≈ 810 tokens  → MAX_CHUNK_TOKENS=1024 covers all chunks with headroom
 #   400 words ≈ 540 tokens  → MAX_CHUNK_TOKENS=640 is sufficient if you use smaller chunks
 
-MAX_CHUNK_TOKENS = 1024  # embedder max_length — set equal to or above chunk target
+MAX_CHUNK_TOKENS = 640  # embedder max_length — set equal to or above chunk target
 
 # Chunker targets this many tokens per chunk (≈ MAX_CHUNK_TOKENS * 0.75 to leave overlap room)
-CHUNK_TARGET_TOKENS = 768  # ~570 words
+CHUNK_TARGET_TOKENS = 400
 CHUNK_OVERLAP_TOKENS = 64
 
 # Word bounds for normalisation pass
 CHUNK_MIN_WORDS = 40  # drop stubs
-CHUNK_MAX_WORDS = int(
-    CHUNK_TARGET_TOKENS / 1.35
-)  # ≈ 570 words — derived, don't set manually
+CHUNK_MAX_WORDS = int(CHUNK_TARGET_TOKENS / 1.35)
 
 # ── Relevance queries ─────────────────────────────────────────────────────────
 

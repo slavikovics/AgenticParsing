@@ -127,8 +127,8 @@ def parse_args():
     p.add_argument(
         "--min-score",
         type=float,
-        default=0.65,
-        help="Minimum cosine similarity to keep a chunk (default: 0.65)",
+        default=0.28,
+        help="Minimum cosine similarity to keep a chunk (default: 0.2)",
     )
     p.add_argument(
         "--chunk-size", type=int, default=400, help="Target chunk size in tokens"
