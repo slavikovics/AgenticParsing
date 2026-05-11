@@ -136,7 +136,7 @@ typing-inspection==0.4.2
 typing_extensions==4.15.0
 tzlocal==5.3.1
 unclecode-litellm==1.81.13
-urllib3==2.6.3
+urllib3==2.7.0
 xxhash==3.7.0
 yarl==1.23.0
 zipp==3.23.1
